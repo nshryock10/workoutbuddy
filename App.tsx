@@ -1,20 +1,24 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
+import AuthNavigator from './assets/src/navigation/AuthNavigator';
 
-export default function App() {
+const App = () => {
+
+  const [fontsLoaded] = useFonts({
+    DMRegular: require('./assets/fonts/Manrope-Regular.ttf'),
+    DMMedium: require('./assets/fonts/Manrope-Medium.ttf'),
+    DMBold: require('./assets/fonts/Manrope-Bold.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return null; // Or a loading screen
+  }
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <AuthNavigator />
+    </NavigationContainer>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;
