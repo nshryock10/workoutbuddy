@@ -89,4 +89,8 @@ const styles = StyleSheet.create({
   link: {
     fontSize: SIZES.medium,
     color: COLORS.secondary,
-    marg
+    marginTop: SIZES.large,
+  },
+});
+
+export default SignInScreen;

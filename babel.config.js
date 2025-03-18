@@ -12,4 +12,9 @@ module.exports = function (api) {
               '@assets': './assets',
               '@navigation': './navigation',
               '@assets/constants': './assets/constants',
-            }
+            },
+          },
+        ],
+      ],
+    };
+  };

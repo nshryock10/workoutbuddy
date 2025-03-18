@@ -83,4 +83,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.lightWhite,
     borderRadius: SIZES.small,
     fontSize: SIZES.medium,
-    color: COLORS.primar
+    color: COLORS.primary,
+    ...SHADOWS.small,
+  },
+  link: {
+    fontSize: SIZES.medium,
+    color: COLORS.secondary,
+    marginTop: SIZES.large,
+  },
+  button: {
+    backgroundColor: COLORS.tertiary
+  }
+});
+
+export default SignUpScreen;
