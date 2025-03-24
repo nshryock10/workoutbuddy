@@ -1,27 +1,29 @@
+require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const { getUserByEmail, createUser } = require('../queries/userQueries');
-require('dotenv').config();
+const { getUserByEmailOrUsername, getUserByEmail, createUser } = require('../queries/userQueries');
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
 // Register endpoint
 router.post('/register', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+  const { username, email, phone, firstName, lastName, sex, birthday, password } = req.body;
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: 'Username, email, and password are required' });
   }
 
   try {
-    const existingUser = await getUserByEmail(email);
+    const existingUser = await getUserByEmailOrUsername(email, username);
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({
+        message: existingUser.email === email ? 'Email already exists' : 'Username already exists',
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await createUser(email, hashedPassword);
+    await createUser(username, email, phone, firstName, lastName, sex, birthday, hashedPassword);
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     console.error('Registration error:', error.message);
@@ -48,7 +50,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign({ email: user.email }, SECRET_KEY, { expiresIn: '1h' });
-    res.json({ message: 'Login successful', token });
+    res.json({ message: 'Login successful', token, user: { username: user.username, email: user.email } });
   } catch (error) {
     console.error('Login error:', error.message);
     res.status(500).json({ message: 'Server error during login' });

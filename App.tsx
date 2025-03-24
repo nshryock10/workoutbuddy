@@ -1,22 +1,45 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthNavigator from './assets/src/navigation/AuthNavigator';
+import AppNavigator from './assets/src/navigation/AppNavigator';
+import { User } from './assets/src/navigation/types'
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  const [fontsLoaded] = useFonts({
-    DMRegular: require('./assets/fonts/Manrope-Regular.ttf'),
-    DMMedium: require('./assets/fonts/Manrope-Medium.ttf'),
-    DMBold: require('./assets/fonts/Manrope-Bold.ttf'),
-  });
+  const checkLoginStatus = useCallback(async () => {
+    const token = await AsyncStorage.getItem('token');
+    const userData = await AsyncStorage.getItem('user');
+    setIsLoggedIn(!!token);
+    setUser(userData ? JSON.parse(userData) : null);
+  }, []);
 
-  if (!fontsLoaded) {
-    return null; // Or a loading screen
-  }
+  useEffect(() => {
+    checkLoginStatus();
+  }, [checkLoginStatus]);
+
+  const handleLogin = (userData: User) => {
+    setIsLoggedIn(true);
+    setUser(userData);
+    AsyncStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+    AsyncStorage.removeItem('token');
+    AsyncStorage.removeItem('user');
+  };
+
   return (
     <NavigationContainer>
-      <AuthNavigator />
+      {isLoggedIn ? (
+        <AppNavigator user={user} onLogout={handleLogout} />
+      ) : (
+        <AuthNavigator onLogin={handleLogin} />
+      )}
     </NavigationContainer>
   );
 };

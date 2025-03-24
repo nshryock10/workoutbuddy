@@ -2,16 +2,17 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import SignInScreen from '../screens/SignInScreen';
 import SignUpScreen from '../screens/SignUpScreen';
-import HomeScreen from '../screens/HomeScreen';
+import { AuthNavigatorProps } from './types';
 
 const Stack = createStackNavigator();
 
-const AuthNavigator = () => {
+const AuthNavigator = ({ onLogin }: AuthNavigatorProps) => {
   return (
     <Stack.Navigator initialRouteName="SignIn">
-      <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SignIn" options={{ headerShown: false }}>
+        {props => <SignInScreen {...props} onLogin={onLogin} />}
+      </Stack.Screen>
       <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };
