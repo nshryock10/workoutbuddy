@@ -1,42 +1,27 @@
 const pool = require('../db');
 
-// Check if a user exists by email or username
-const getUserByEmailOrUsername = async (email, username) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 OR username = $2',
-      [email, username]
-    );
-    return result.rows[0]; // Return user object or undefined
-  } catch (error) {
-    throw new Error(`Error fetching user: ${error.message}`);
-  }
-};
-
-// Get user by email (for login)
 const getUserByEmail = async (email) => {
-  try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    return result.rows[0];
-  } catch (error) {
-    throw new Error(`Error fetching user by email: ${error.message}`);
-  }
+  const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+  return result.rows[0];
 };
 
-// Create a new user
-const createUser = async (username, email, phone, firstName, lastName, sex, birthday, hashedPassword) => {
-  try {
-    await pool.query(
-      'INSERT INTO users (username, email, phone, first_name, last_name, sex, birthday, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-      [username, email, phone, firstName, lastName, sex, birthday, hashedPassword]
-    );
-  } catch (error) {
-    throw new Error(`Error creating user: ${error.message}`);
-  }
+const addUser = async (user) => {
+  const { username, email, password, phone, first_name, last_name, sex, birthday } = user;
+  const result = await pool.query(
+    'INSERT INTO users (username, email, password, phone, first_name, last_name, sex, birthday) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+    [username, email, password, phone, first_name, last_name, sex, birthday]
+  );
+  return result.rows[0];
 };
 
-module.exports = {
-  getUserByEmailOrUsername,
-  getUserByEmail,
-  createUser,
+const updateUser = async (email, updates) => {
+  const fields = Object.keys(updates).map((key, i) => `${key} = $${i + 2}`).join(', ');
+  const values = Object.values(updates);
+  const result = await pool.query(
+    `UPDATE users SET ${fields} WHERE email = $1 RETURNING *`,
+    [email, ...values]
+  );
+  return result.rows[0];
 };
+
+module.exports = { getUserByEmail, addUser, updateUser };
