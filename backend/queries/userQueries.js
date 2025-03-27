@@ -24,4 +24,12 @@ const updateUser = async (email, updates) => {
   return result.rows[0];
 };
 
-module.exports = { getUserByEmail, addUser, updateUser };
+const getUserResponses = async (userId) => {
+    const result = await pool.query(
+      'SELECT ur.*, o.option FROM user_responses ur JOIN response_options o ON ur.answer_id = o.id WHERE ur.user_id = $1',
+      [userId]
+    );
+    return result.rows;
+  };
+  
+  module.exports = { getUserByEmail, addUser, updateUser, getUserResponses };

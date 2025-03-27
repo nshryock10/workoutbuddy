@@ -23,14 +23,7 @@ const SignInScreen = ({ navigation, onLogin }: SignInScreenProps) => {
       const data = await response.json();
       if (response.ok) {
         await AsyncStorage.setItem('token', data.token);
-        onLogin({
-          username: data.user.username,
-          email: data.user.email,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
-          sex: data.user.sex,
-          birthday: data.user.birthday,
-        });
+        onLogin({ ...data.user, token: data.token });
         Alert.alert('Success', 'Signed in successfully!');
       } else {
         Alert.alert('Error', data.message || 'Sign-in failed');

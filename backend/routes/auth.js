@@ -1,13 +1,12 @@
-require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { getUserByEmail, addUser, updateUser, getUserResponses } = require('../queries/userQueries');
+const { getQuestions, saveUserResponse } = require('../queries/onboarding');
+
 const router = express.Router();
-const {getUserByEmail, addUser, updateUser } = require('../queries/userQueries');
+const SECRET_KEY = 'your-secret-key';
 
-const SECRET_KEY = process.env.SECRET_KEY;
-
-// Register endpoint
 router.post('/register', async (req, res) => {
   const { username, email, phone, firstName, lastName, sex, birthday, password } = req.body;
   if (!username || !email || !phone || !firstName || !lastName || !sex || !birthday || !password) {
@@ -29,7 +28,7 @@ router.post('/register', async (req, res) => {
       first_name: firstName,
       last_name: lastName,
       sex,
-      birthday, // Expects YYYY-MM-DD from frontend
+      birthday,
     });
 
     res.status(201).json({ message: 'User registered successfully' });
@@ -39,7 +38,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login endpoint
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -58,17 +56,20 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign({ email: user.email }, SECRET_KEY, { expiresIn: '1h' });
+    const responses = await getUserResponses(user.id);
     res.json({
       message: 'Login successful',
       token,
       user: {
+        id: user.id,
         username: user.username,
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
         sex: user.sex,
-        birthday: user.birthday.toISOString().split('T')[0], // Ensure YYYY-MM-DD
+        birthday: user.birthday.toISOString().split('T')[0],
         hasCompletedOnboarding: user.has_completed_onboarding,
+        responses,
       },
     });
   } catch (error) {
@@ -78,7 +79,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/complete-onboarding', async (req, res) => {
-  const { email } = req.body; // Add JWT auth in production
+  const { email } = req.body;
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
@@ -88,9 +89,11 @@ router.post('/complete-onboarding', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    const responses = await getUserResponses(user.id);
     res.json({
       message: 'Onboarding completed',
       user: {
+        id: user.id,
         username: user.username,
         email: user.email,
         firstName: user.first_name,
@@ -98,6 +101,7 @@ router.post('/complete-onboarding', async (req, res) => {
         sex: user.sex,
         birthday: user.birthday.toISOString().split('T')[0],
         hasCompletedOnboarding: user.has_completed_onboarding,
+        responses,
       },
     });
   } catch (error) {
@@ -106,9 +110,29 @@ router.post('/complete-onboarding', async (req, res) => {
   }
 });
 
-// Test endpoint
-router.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the FitnessTracker API!' });
+router.get('/onboarding-questions', async (req, res) => {
+  try {
+    const questions = await getQuestions();
+    res.json(questions);
+  } catch (error) {
+    console.error('Error fetching questions:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/save-response', async (req, res) => {
+  const { userId, questionId, answerIds } = req.body;
+  if (!userId || !questionId || !answerIds) {
+    return res.status(400).json({ message: 'User ID, Question ID, and Answer ID(s) are required' });
+  }
+
+  try {
+    await saveUserResponse(userId, questionId, answerIds);
+    res.json({ message: 'Response(s) saved' });
+  } catch (error) {
+    console.error('Error saving response:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 module.exports = router;

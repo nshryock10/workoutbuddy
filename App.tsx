@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { View, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthNavigator from './assets/src/navigation/AuthNavigator';
 import AppNavigator from './assets/src/navigation/AppNavigator';
@@ -15,7 +15,8 @@ const App = () => {
   const checkLoginAndOnboardingStatus = useCallback(async () => {
     const token = await AsyncStorage.getItem('token');
     const userData = await AsyncStorage.getItem('user');
-    const localOnboardingComplete = await AsyncStorage.getItem('hasCompletedOnboarding');
+    const storedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
+    console.log('Initial check - Token:', token, 'UserData:', userData, 'Stored Onboarding:', storedOnboarding);
 
     if (token && userData) {
       const parsedUser = JSON.parse(userData);
@@ -26,25 +27,28 @@ const App = () => {
         const response = await fetch('http://localhost:3000/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: parsedUser.email, password: '' }), // Use token auth in production
+          body: JSON.stringify({ email: parsedUser.email, password: '' }), // Should use token in production
         });
         const data = await response.json();
+        console.log('Backend login response:', data);
         if (response.ok) {
-          setUser(data.user);
+          setUser({ ...data.user, token: data.token });
           setHasCompletedOnboarding(data.user.hasCompletedOnboarding);
-          await AsyncStorage.setItem('user', JSON.stringify(data.user));
+          await AsyncStorage.setItem('user', JSON.stringify({ ...data.user, token: data.token }));
+          await AsyncStorage.setItem('token', data.token);
           await AsyncStorage.setItem('hasCompletedOnboarding', String(data.user.hasCompletedOnboarding));
         } else {
-          setHasCompletedOnboarding(localOnboardingComplete === 'true');
+          console.warn('Login sync failed, using local data');
+          setHasCompletedOnboarding(parsedUser.hasCompletedOnboarding || false);
         }
       } catch (error) {
         console.error('Backend sync error:', error);
-        setHasCompletedOnboarding(localOnboardingComplete === 'true');
+        setHasCompletedOnboarding(parsedUser.hasCompletedOnboarding || false);
       }
     } else {
       setIsLoggedIn(false);
       setUser(null);
-      setHasCompletedOnboarding(true);
+      setHasCompletedOnboarding(true); // Default to true when no user, skips onboarding
     }
   }, []);
 
@@ -53,9 +57,11 @@ const App = () => {
   }, [checkLoginAndOnboardingStatus]);
 
   const handleLogin = async (userData: User) => {
+    console.log('Login user data:', userData);
     setIsLoggedIn(true);
     setUser(userData);
     setHasCompletedOnboarding(userData.hasCompletedOnboarding || false);
+    await AsyncStorage.setItem('token', userData.token || '');
     await AsyncStorage.setItem('user', JSON.stringify(userData));
     await AsyncStorage.setItem('hasCompletedOnboarding', String(userData.hasCompletedOnboarding || false));
   };
@@ -63,8 +69,11 @@ const App = () => {
   const handleLogout = async () => {
     setIsLoggedIn(false);
     setUser(null);
+    setHasCompletedOnboarding(true); // Set to true to skip loading and show AuthNavigator
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('user');
+    console.log('After logout - AsyncStorage hasCompletedOnboarding:', await AsyncStorage.getItem('hasCompletedOnboarding'));
+    // Keep hasCompletedOnboarding in AsyncStorage for next login
   };
 
   const handleOnboardingComplete = async () => {
@@ -77,9 +86,10 @@ const App = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        setUser(data.user);
+        const updatedUser = { ...data.user, token: user.token };
+        setUser(updatedUser);
         setHasCompletedOnboarding(true);
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
         await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
       }
     } catch (error) {
@@ -90,7 +100,11 @@ const App = () => {
   };
 
   if (hasCompletedOnboarding === null) {
-    return <View><Text>Loading...</Text></View>;
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
   }
 
   return (
@@ -105,5 +119,18 @@ const App = () => {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFC',
+  },
+  loadingText: {
+    fontSize: 20,
+    color: '#312651',
+  },
+});
 
 export default App;
