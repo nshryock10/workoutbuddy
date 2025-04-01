@@ -34,4 +34,14 @@ const saveUserResponse = async (userId, questionId, answerIds) => {
   }
 };
 
-module.exports = { getQuestions, saveUserResponse };
+const getEquipment = async () => {
+    try {
+      const result = await pool.query('SELECT id, category, description FROM equipment ORDER BY id ASC');
+      return result.rows.map(row => ({ id: row.id, category: row.category, option: row.description }));
+    } catch (error) {
+      console.error('Error fetching equipment:', error.message);
+      throw error;
+    }
+  };
+  
+  module.exports = { getQuestions, saveUserResponse, getEquipment };

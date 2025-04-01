@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { getUserByEmail, addUser, updateUser, getUserResponses } = require('../queries/userQueries');
-const { getQuestions, saveUserResponse } = require('../queries/onboarding');
+const { getQuestions, saveUserResponse, getEquipment } = require('../queries/onboarding');
 
 const router = express.Router();
 const SECRET_KEY = 'your-secret-key';
@@ -131,6 +131,16 @@ router.post('/save-response', async (req, res) => {
     res.json({ message: 'Response(s) saved' });
   } catch (error) {
     console.error('Error saving response:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/equipment', async (req, res) => {
+  try {
+    const equipment = await getEquipment();
+    res.json(equipment);
+  } catch (error) {
+    console.error('Error fetching equipment:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });

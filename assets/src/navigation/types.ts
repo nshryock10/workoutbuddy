@@ -29,6 +29,21 @@ export interface OnboardingQuestion {
   options: { id: number; option: string }[];
 }
 
+// Interface for equipment as stored in component state
+export interface EquipmentOption {
+  id: number;
+  option: string;
+  category: string;
+}
+
+// Interface for raw equipment data from API
+export interface RawEquipment {
+  id: number;
+  option?: string; // Optional, might be 'description' instead
+  description?: string; // Optional, fallback if 'option' isn’t present
+  category: string;
+}
+
 export type AuthStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
