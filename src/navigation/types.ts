@@ -29,18 +29,16 @@ export interface OnboardingQuestion {
   options: { id: number; option: string }[];
 }
 
-// Interface for equipment as stored in component state
 export interface EquipmentOption {
   id: number;
   option: string;
   category: string;
 }
 
-// Interface for raw equipment data from API
 export interface RawEquipment {
   id: number;
-  option?: string; // Optional, might be 'description' instead
-  description?: string; // Optional, fallback if 'option' isn’t present
+  option?: string;
+  description?: string;
   category: string;
 }
 
@@ -52,6 +50,7 @@ export type AuthStackParamList = {
 export type AppTabParamList = {
   Home: undefined;
   Profile: undefined;
+  Movements: undefined; // Added new tab
 };
 
 export type OnboardingStackParamList = {
@@ -64,6 +63,7 @@ export type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList,
 export type SignUpScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignUp'>;
 export type HomeScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Home'>;
 export type ProfileScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Profile'>;
+export type MovementsScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Movements'>; // Added
 export type WelcomeScreenNavigationProp = StackNavigationProp<OnboardingStackParamList, 'Welcome'>;
 export type UserInfoScreenNavigationProp = StackNavigationProp<OnboardingStackParamList, 'UserInfo'>;
 export type OnboardingCompleteScreenNavigationProp = StackNavigationProp<OnboardingStackParamList, 'OnboardingComplete'>;

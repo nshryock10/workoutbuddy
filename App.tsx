@@ -2,10 +2,10 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AuthNavigator from './assets/src/navigation/AuthNavigator';
-import AppNavigator from './assets/src/navigation/AppNavigator';
-import OnboardingNavigator from './assets/src/navigation/OnboardingNavigator';
-import { User } from './assets/src/navigation/types';
+import AuthNavigator from './src/navigation/AuthNavigator';
+import AppNavigator from './src/navigation/AppNavigator';
+import OnboardingNavigator from './src/navigation/OnboardingNavigator';
+import { User } from './src/navigation/types';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
