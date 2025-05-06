@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Animated, ScrollView } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { View, Text, StyleSheet, Alert, Animated } from 'react-native';
 import { COLORS, FONT, SIZES, BUTTONS, SHADOWS } from '@assets/constants/theme';
-import { UserInfoScreenNavigationProp, OnboardingQuestion, EquipmentOption, RawEquipment } from '../navigation/types';
+import { UserInfoScreenNavigationProp, OnboardingQuestion, EquipmentOption, RawEquipment, Option } from '../navigation/types';
+import ProgressBar from '../components/ProgressBar';
+import NavigationButtons from '../components/NavigationButtons';
+import QuestionDisplay from '../components/QuestionDisplay';
+import OptionList from '../components/OptionList';
+import EquipmentOptionList from '../components/EquipmentOptionList';
 
 interface UserInfoScreenProps {
   navigation: UserInfoScreenNavigationProp;
@@ -139,211 +143,83 @@ const UserInfoScreen = ({ navigation, user }: UserInfoScreenProps) => {
   const goBack = () => {
     if (isEquipmentStep && equipmentQuestion) {
       setIsEquipmentStep(false);
-    } else if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    } else {
-      navigation.goBack();
+      } else if (currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      } else {
+        navigation.goBack();
+      }
+    };
+  
+    if (regularQuestions.length === 0) {
+      return (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading questions...</Text>
+        </View>
+      );
     }
-  };
-
-  if (regularQuestions.length === 0) {
+  
+    const currentQuestion = isEquipmentStep && equipmentQuestion ? equipmentQuestion : regularQuestions[currentIndex];
+  
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading questions...</Text>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <QuestionDisplay question={currentQuestion.question} />
+          {currentQuestion.question === 'Select your equipment: ' && shouldShowEquipmentQuestion() ? (
+            equipment.length > 0 ? (
+              <EquipmentOptionList
+                equipment={equipment}
+                selectedIds={responses[currentQuestion.id] || []}
+                onSelect={handleResponse}
+                questionId={currentQuestion.id}
+              />
+            ) : (
+              <Text style={styles.loadingText}>No equipment available</Text>
+            )
+          ) : (
+            <OptionList
+              options={currentQuestion.options}
+              selectedIds={responses[currentQuestion.id] || []}
+              onSelect={handleResponse}
+              responseType={currentQuestion.response_type}
+              questionId={currentQuestion.id}
+            />
+          )}
+        </View>
+        <View style={styles.footer}>
+          <ProgressBar progress={progressAnim} />
+          <NavigationButtons onBack={goBack} onNext={saveResponseAndNext} />
+        </View>
       </View>
     );
-  }
-
-  const currentQuestion = isEquipmentStep && equipmentQuestion ? equipmentQuestion : regularQuestions[currentIndex];
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
+  };
+  
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: COLORS.lightWhite,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    content: {
+      width: '80%',
+      alignItems: 'center',
+      flexGrow: 0,
+    },
+    footer: {
+      position: 'absolute',
+      bottom: SIZES.xLarge,
+      width: '80%',
+      alignItems: 'center',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: SIZES.large,
+      color: COLORS.primary,
+    },
   });
-
-  const groupedEquipment = equipment.reduce((acc, item) => {
-    const category = item.category || 'Uncategorized';
-    acc[category] = acc[category] || [];
-    acc[category].push(item);
-    return acc;
-  }, {} as { [key: string]: EquipmentOption[] });
-
-  const isEquipmentQuestion = currentQuestion.question === 'Select your equipment: ';
-  const showEquipmentQuestion = isEquipmentQuestion && shouldShowEquipmentQuestion();
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.question}>{currentQuestion.question}</Text>
-        {showEquipmentQuestion ? (
-          equipment.length > 0 ? (
-            <ScrollView style={styles.scrollContainer}>
-              {Object.entries(groupedEquipment).map(([category, items]) => (
-                <View key={category} style={styles.categorySection}>
-                  <Text style={styles.categoryTitle}>{category}</Text>
-                  {items.map((eq) => (
-                    <TouchableOpacity
-                      key={eq.id}
-                      style={styles.option}
-                      onPress={() => handleResponse(currentQuestion.id, eq.id, 'multiple')}
-                    >
-                      <Icon
-                        name={responses[currentQuestion.id]?.includes(eq.id) ? 'check-box' : 'check-box-outline-blank'}
-                        size={SIZES.medium}
-                        color={COLORS.primary}
-                      />
-                      <Text style={styles.optionText}>{eq.option}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ))}
-            </ScrollView>
-          ) : (
-            <Text style={styles.loadingText}>No equipment available</Text>
-          )
-        ) : (
-          currentQuestion.options.map((opt) => (
-            <TouchableOpacity
-              key={opt.id}
-              style={styles.option}
-              onPress={() => handleResponse(currentQuestion.id, opt.id, currentQuestion.response_type)}
-            >
-              {currentQuestion.response_type === 'single' ? (
-                <Icon
-                  name={responses[currentQuestion.id]?.includes(opt.id) ? 'radio-button-checked' : 'radio-button-unchecked'}
-                  size={SIZES.medium}
-                  color={COLORS.primary}
-                />
-              ) : (
-                <Icon
-                  name={responses[currentQuestion.id]?.includes(opt.id) ? 'check-box' : 'check-box-outline-blank'}
-                  size={SIZES.medium}
-                  color={COLORS.primary}
-                />
-              )}
-              <Text style={styles.optionText}>{opt.option}</Text>
-            </TouchableOpacity>
-          ))
-        )}
-      </View>
-      <View style={styles.footer}>
-        <View style={styles.progressBarContainer}>
-          <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={goBack}>
-            <Icon name="arrow-back" size={SIZES.large} color={COLORS.white} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={saveResponseAndNext}>
-            <Icon name="arrow-forward" size={SIZES.large} color={COLORS.white} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.lightWhite,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    width: '80%',
-    alignItems: 'center',
-    flexGrow: 0,
-  },
-  scrollContainer: {
-    maxHeight: '85%',
-    width: '100%',
-  },
-  question: {
-    fontSize: SIZES.large,
-    fontFamily: FONT.medium,
-    color: COLORS.primary,
-    marginBottom: SIZES.medium,
-    textAlign: 'center',
-  },
-  categorySection: {
-    width: '100%',
-    marginBottom: SIZES.medium,
-  },
-  categoryTitle: {
-    fontSize: SIZES.medium,
-    fontFamily: FONT.bold,
-    color: COLORS.tertiary,
-    marginBottom: SIZES.small,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SIZES.small,
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.small,
-    marginBottom: SIZES.small,
-    width: '100%',
-    ...SHADOWS.small,
-  },
-  optionText: {
-    fontSize: SIZES.medium,
-    fontFamily: FONT.regular,
-    color: COLORS.gray,
-    marginLeft: SIZES.small,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: SIZES.xLarge,
-    width: '80%',
-    alignItems: 'center',
-  },
-  progressBarContainer: {
-    width: '100%',
-    height: 8,
-    backgroundColor: COLORS.gray,
-    borderRadius: SIZES.small,
-    overflow: 'hidden',
-    marginBottom: SIZES.medium,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: COLORS.tertiary,
-    borderRadius: SIZES.small,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '60%',
-  },
-  nextButton: {
-    backgroundColor: COLORS.tertiary,
-    padding: SIZES.small,
-    borderRadius: SIZES.small,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 50,
-    height: 50,
-    ...SHADOWS.small,
-  },
-  backButton: {
-    backgroundColor: COLORS.gray,
-    padding: SIZES.small,
-    borderRadius: SIZES.small,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 50,
-    height: 50,
-    ...SHADOWS.small,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: SIZES.large,
-    color: COLORS.primary,
-  },
-});
-
-export default UserInfoScreen;
+  
+  export default UserInfoScreen;

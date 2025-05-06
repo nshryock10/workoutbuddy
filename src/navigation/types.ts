@@ -59,6 +59,11 @@ export type OnboardingStackParamList = {
   OnboardingComplete: undefined;
 };
 
+export interface Option {
+  id: number;
+  option: string;
+}
+
 export type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignIn'>;
 export type SignUpScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignUp'>;
 export type HomeScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Home'>;
