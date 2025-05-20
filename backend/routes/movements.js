@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const movementQueries = require('../queries/movementsQueries'); // Adjust path
+const movementQueries = require('../queries/workoutQueries'); // Adjust path
 
 // Get all movements with muscle groups
 router.get('/movements', async (req, res) => {

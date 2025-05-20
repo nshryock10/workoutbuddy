@@ -50,7 +50,17 @@ export type AuthStackParamList = {
 export type AppTabParamList = {
   Home: undefined;
   Profile: undefined;
-  Movements: undefined; // Added new tab
+  Movements: undefined;
+  CreateWorkout: undefined;
+  Placeholder: undefined;
+};
+
+export type RootStackParamList = {
+  Tabs: undefined;
+  Profile: undefined;
+  Home: undefined;
+  Movements: undefined;
+  CreateWorkout: undefined;
 };
 
 export type OnboardingStackParamList = {
@@ -68,10 +78,12 @@ export type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList,
 export type SignUpScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignUp'>;
 export type HomeScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Home'>;
 export type ProfileScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Profile'>;
-export type MovementsScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Movements'>; // Added
+export type MovementsScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'Movements'>;
 export type WelcomeScreenNavigationProp = StackNavigationProp<OnboardingStackParamList, 'Welcome'>;
 export type UserInfoScreenNavigationProp = StackNavigationProp<OnboardingStackParamList, 'UserInfo'>;
 export type OnboardingCompleteScreenNavigationProp = StackNavigationProp<OnboardingStackParamList, 'OnboardingComplete'>;
+export type CreateWorkoutScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'CreateWorkout'>;
+export type TabNavigatorNavigationProp = BottomTabNavigationProp<AppTabParamList>;
 
 export interface AppNavigatorProps {
   user: User | null;

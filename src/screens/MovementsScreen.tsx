@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { COLORS, SIZES } from '@assets/constants/theme';
-import { MovementsScreenNavigationProp } from '@src/navigation/types';
+import { MovementsScreenNavigationProp } from '../navigation/types';
 import MovementCard from '../components/MovementCard';
 import FilterModal from '../components/FilterModal';
 import SortModal from '../components/SortModal';
