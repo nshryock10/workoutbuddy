@@ -18,6 +18,34 @@ const getAllMovements = async () => {
   }
 };
 
+const getAllPrograms = async () => {
+
+  console.log('fetching programs')
+
+  try {
+    const result = await pool.query(`SELECT * FROM workout_programs`);
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching programs:', error.message);
+    throw error; // Let the route handle the error response
+  }
+}
+
+const getWorkoutOfTheDay = async () => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM workout_programs WHERE is_workout_of_day = $1`,
+      [true]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching workout of the day:', error.message);
+    throw error; // Let the route handle the error response
+  }
+};
+
 module.exports = {
   getAllMovements,
+  getAllPrograms,
+  getWorkoutOfTheDay
 };

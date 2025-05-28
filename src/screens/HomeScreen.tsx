@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, FlatList, Alert } from 'react-native';
-import { COLORS, FONT, SIZES } from '@assets/constants/theme';
+import { COLORS, FONT, SIZES } from '../../assets/constants/theme';
 import { HomeScreenNavigationProp } from '../navigation/types';
 import TitleText from '../components/TitleText';
-import { fetchWorkoutPrograms, WorkoutProgram } from '../utils/api';
+import { fetchWOD, WorkoutProgram } from '../utils/api';
 // import PrimaryButton from '../components/PrimaryButton'; // Uncomment if adding navigation buttons
 
 interface HomeScreenProps {
@@ -12,7 +12,6 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [workoutOfDay, setWorkoutOfDay] = useState<WorkoutProgram | null>(null);
-  const user_id = 1; // Placeholder; get from auth context
 
   useEffect(() => {
     fetchWorkoutProgramsData();
@@ -20,7 +19,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const fetchWorkoutProgramsData = async () => {
     try {
-      const data = await fetchWorkoutPrograms(user_id, true);
+      const data = await fetchWOD(); // Fetch WOD
       if (data.length > 0) {
         setWorkoutOfDay(data[0]);
       } else {
@@ -28,7 +27,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Error fetching workout programs:', error);
-      // Only show alert for unexpected errors
       Alert.alert('Error', 'Failed to load workout programs. Please try again later.');
     }
   };

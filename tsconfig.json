@@ -8,7 +8,8 @@
         "@assets/*": ["assets/*"],
         "@assets/constants/*": ["assets/constants/*"]
       },
-      "allowJs": true
+      "allowJs": true,
+      
     },
     "include": [
       "src/**/*",

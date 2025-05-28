@@ -1,45 +1,44 @@
 const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
-const workoutQueries = require('../queries/workoutQueries');
+const dotenv = require('dotenv');
+const workoutQueries = require('../queries/workoutQueries')
+
+// Load environment variables
+dotenv.config();
 
 const pool = new Pool({
-  user: 'your_user',
-  host: 'localhost',
-  database: 'fitness_tracker',
-  password: 'your_password',
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 });
 
 // Middleware to get user_id (stub)
 const getUserId = (req, res, next) => {
-  req.user_id = 1; // Replace with auth
+  req.user_id = 1; // TODO: Replace with auth (e.g., JWT)
   next();
 };
 
 // GET /api/workout_programs
-router.get('/workout_programs', getUserId, async (req, res) => {
-  try {
-    const { user_id, is_workout_of_day } = req.query;
-    const queryParams = [];
-    let query = 'SELECT program_id AS id, program_name, description, is_workout_of_day, public, user_id FROM workout_programs WHERE 1=1';
-
-    if (user_id) {
-      query += ` AND user_id = $${queryParams.length + 1}`;
-      queryParams.push(parseInt(user_id));
-    }
-    if (is_workout_of_day === 'true') {
-      query += ` AND is_workout_of_day = $${queryParams.length + 1}`;
-      queryParams.push(true);
-    }
-
-    const result = await pool.query(query, queryParams);
-    res.json(result.rows);
+router.get('/workout_programs', async (req, res) => {
+try {
+    const programs = await workoutQueries.getAllPrograms();
+    res.json(programs);
   } catch (error) {
-    console.error('Error fetching workout programs:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.get('/wod', async (req, res) => {
+  try{
+    const wod = await workoutQueries.getWorkoutOfTheDay();
+    res.json(wod);
+  }catch (error){
+    res.status(500).json({error: 'Internal server error'})
+  }
+})
 
 // GET /api/movements/search
 router.get('/movements/search', getUserId, async (req, res) => {
@@ -57,6 +56,7 @@ router.get('/movements/search', getUserId, async (req, res) => {
     console.error('Error searching movements:', error);
     res.status(500).json({ message: 'Server error' });
   }
+    
 });
 
 // POST /api/planned_workouts
