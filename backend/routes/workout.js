@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
-const workoutQueries = require('../queries/workoutQueries')
+const workoutQueries = require('../queries/workoutQueries');
 
 // Load environment variables
 dotenv.config();
@@ -23,22 +23,25 @@ const getUserId = (req, res, next) => {
 
 // GET /api/workout_programs
 router.get('/workout_programs', async (req, res) => {
-try {
+  try {
     const programs = await workoutQueries.getAllPrograms();
     res.json(programs);
   } catch (error) {
+    console.error('Error fetching workout programs:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+// GET /api/wod
 router.get('/wod', async (req, res) => {
-  try{
+  try {
     const wod = await workoutQueries.getWorkoutOfTheDay();
     res.json(wod);
-  }catch (error){
-    res.status(500).json({error: 'Internal server error'})
+  } catch (error) {
+    console.error('Error fetching WOD:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-})
+});
 
 // GET /api/movements/search
 router.get('/movements/search', getUserId, async (req, res) => {
@@ -56,7 +59,17 @@ router.get('/movements/search', getUserId, async (req, res) => {
     console.error('Error searching movements:', error);
     res.status(500).json({ message: 'Server error' });
   }
-    
+});
+
+router.get('/planned_workouts', async (req, res) => {
+  console.log('getting workouts');
+  try {
+    const plannedworkouts = await workoutQueries.getPlannedWorkouts();
+    res.json(plannedworkouts);
+  } catch (error) {
+    console.error('Error fetching planned workouts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // POST /api/planned_workouts
@@ -64,8 +77,22 @@ router.post('/planned_workouts', getUserId, async (req, res) => {
   try {
     const { workout_id, program_id, movements } = req.body;
     const user_id = req.user_id;
+    console.log('Received payload:', JSON.stringify(req.body, null, 2));
+    console.log('Database config:', {
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT,
+    });
+
     if (!workout_id || !movements || !Array.isArray(movements)) {
+      console.error('Validation error: Missing or invalid workout_id or movements');
       return res.status(400).json({ message: 'Invalid request: workout_id and movements array required' });
+    }
+
+    if (movements.length === 0) {
+      console.error('Validation error: Movements array is empty');
+      return res.status(400).json({ message: 'Movements array cannot be empty' });
     }
 
     const client = await pool.connect();
@@ -77,40 +104,47 @@ router.post('/planned_workouts', getUserId, async (req, res) => {
           description,
           block_id,
           movement_id,
+          planned_set,
           planned_reps,
           equipment_id,
           planned_rest,
           notes,
+          planned_weight,
         } = movement;
-        const result = await client.query(
-          'INSERT INTO planned_workouts (workout_id, description, block_id, movement_id, planned_set, planned_reps, equipment_id, planned_rest, notes, user_id) ' +
-          'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-          [
-            workout_id,
-            description || null,
-            block_id || null,
-            movement_id || null,
-            0, // planned_set deprecated
-            planned_reps,
-            equipment_id || null,
-            planned_rest || null,
-            notes || null,
-            user_id,
-          ]
+
+        if (!description || planned_set == null || planned_reps == null) {
+          console.error('Validation error: Missing required movement fields', movement);
+          return res.status(400).json({ message: 'Each movement must have description, planned_set, and planned_reps' });
+        }
+
+        const result = await workoutQueries.createPlannedWorkout(
+          workout_id,
+          description,
+          block_id,
+          movement_id,
+          planned_set,
+          planned_reps,
+          equipment_id,
+          planned_rest,
+          notes,
+          user_id,
+          planned_weight
         );
-        inserted.push(result.rows[0]);
+        inserted.push(result);
       }
       await client.query('COMMIT');
-      res.status(201).json(inserted);
+      console.log('Workout saved successfully:', workout_id);
+      res.status(200).json(inserted);
     } catch (error) {
       await client.query('ROLLBACK');
-      throw error;
+      console.error('Database error:', error);
+      return res.status(500).json({ error: 'Failed to save workout', details: error.message });
     } finally {
       client.release();
     }
   } catch (error) {
     console.error('Error creating planned workouts:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 

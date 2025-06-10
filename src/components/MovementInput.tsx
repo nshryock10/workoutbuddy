@@ -11,6 +11,7 @@ export interface MovementSuggestion {
 
 export interface MovementInputProps extends Omit<FormInputProps, 'onChangeText'> {
   onChange: (updates: { name: string; movement_id: number | null }) => void;
+  textStyle?: StyleProp<TextStyle>; 
 }
 
 const MovementInput: React.FC<MovementInputProps> = ({
@@ -19,6 +20,7 @@ const MovementInput: React.FC<MovementInputProps> = ({
   placeholder,
   style,
   keyboardType,
+  textStyle
 }) => {
   const [suggestions, setSuggestions] = useState<MovementSuggestion[]>([]);
 
@@ -50,6 +52,7 @@ const MovementInput: React.FC<MovementInputProps> = ({
         placeholder={placeholder}
         keyboardType={keyboardType}
         style={[styles.input, style]}
+        textStyle={textStyle}
       />
       {suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>

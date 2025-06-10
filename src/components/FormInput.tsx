@@ -7,6 +7,7 @@ export interface FormInputProps {
   placeholder?: string;
   keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad';
   style?: StyleProp<TextStyle>;
+  textStyle?: StyleProp<TextStyle>; 
 }
 
 const FormInput: React.FC<FormInputProps> = ({
@@ -15,6 +16,7 @@ const FormInput: React.FC<FormInputProps> = ({
   placeholder,
   keyboardType,
   style,
+  textStyle
 }) => {
   return (
     <TextInput
@@ -22,7 +24,7 @@ const FormInput: React.FC<FormInputProps> = ({
       onChangeText={onChangeText}
       placeholder={placeholder}
       keyboardType={keyboardType}
-      style={style}
+      style={[style, textStyle]}
     />
   );
 };
